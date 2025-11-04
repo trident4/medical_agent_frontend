@@ -35,7 +35,7 @@ export default function PatientSearch({
     error,
     isLoading,
   }: { data: Patient[]; error: any; isLoading: boolean } = useSWR(
-    `/api/patients?q=${debouncedQuery}`,
+    `/api/patients?search=${debouncedQuery}`,
     fetcher
   );
 

@@ -14,22 +14,19 @@ import { Label } from "@/components/ui/label";
 import useSWR from "swr";
 import { Spinner } from "@/components/ui/spinner";
 import ReactMarkdown from "react-markdown";
-import ChatScreen from "@/components/ui/chat/ChatScree";
+import ChatScreen from "@/components/chat/ChatScree";
+import { Plus } from "lucide-react";
+import { FormDialog } from "@/components/commoncomp/FormDialog";
+import { AddPatientForm } from "@/components/patients/AddPatient";
+import { fetcherPost } from "@/utils";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function PatientsPage() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [includeRecentVisits, setIncludeRecentVisits] = useState(5);
   const [timePeriodDays, setTimePeriodDays] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
-
-  const fetcher = (url: string, body: any) =>
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    }).then((res) => res.json());
+  const [open, setOpen] = useState(false);
 
   interface PatientSummaryBody {
     patient_id: string;
@@ -56,7 +53,7 @@ export default function PatientsPage() {
     isLoading: summaryLoading,
   } = useSWR(
     () => (patientSummaryBody.patient_id ? `/api/patientssummary` : null),
-    (url) => fetcher(url, patientSummaryBody)
+    (url) => fetcherPost(url, patientSummaryBody)
   );
 
   useEffect(() => {
@@ -66,14 +63,28 @@ export default function PatientsPage() {
   }, [summaryData]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex min-h-screen  items-center justify-center bg-zinc-50 font-sans dark:bg-black">
       <main className="flex min-h-screen w-full max-w-6xl flex-col items-center justify-start py-5 px-5 bg-white dark:bg-black sm:items-start">
-        <h1 className="max-w-xs text-3xl font-semibold  tracking-tight text-black dark:text-zinc-50 ">
-          Patients
-        </h1>
+        <div className="flex w-full items-center justify-between">
+          <h1 className="max-w-xs text-3xl font-semibold  tracking-tight text-black dark:text-zinc-50 ">
+            Patients
+          </h1>
+          <FormDialog
+            title="Add New Patient"
+            description="Fill out the details below to add a patient."
+            open={open}
+            onOpenChange={setOpen}
+            trigger={
+              <Button onClick={() => setOpen(true)}>+ Add Patient</Button>
+            }
+          >
+            <AddPatientForm onSubmit={(data) => setOpen(false)} />
+          </FormDialog>
+        </div>
         <div className="mt-3 w-full">
           <PatientSearch onSelect={(patient) => setSelectedPatient(patient)} />
         </div>
+
         {selectedPatient && (
           <div className="mt-5 w-full">
             <h2 className="text-2xl font-semibold">Selected Patient</h2>
@@ -121,7 +132,8 @@ export default function PatientsPage() {
               <Button
                 variant="outline"
                 title={showSummary ? "Hide Summary" : "Show Summary"}
-                className="btn-sm ml-2 cursor-pointer"
+                className="ml-2 cursor-pointer"
+                size={"sm"}
                 onClick={() => setShowSummary(!showSummary)}
               >
                 {showSummary ? "Hide" : "Show"}
@@ -150,6 +162,7 @@ export default function PatientsPage() {
             Please select a patient to view details and chat.
           </div>
         )}
+        <Toaster />
       </main>
     </div>
   );

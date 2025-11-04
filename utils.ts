@@ -76,3 +76,12 @@ export const do_put = async (url: string, data: any, cookies?: string) => {
     throw error;
   }
 };
+
+export const fetcherPost = (url: string, body: any) =>
+  fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  }).then((res) => res.json());
