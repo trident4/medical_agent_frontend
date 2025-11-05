@@ -22,6 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useApi } from "@/lib/hooks/api";
+import { Spinner } from "../ui/spinner";
 
 const patientSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -29,7 +31,7 @@ const patientSchema = z.object({
   date_of_birth: z.string().min(1, "Date of birth is required"),
   gender: z.string().optional(),
   phone: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
+  email: z.email().optional().or(z.literal("")),
   address: z.string().optional(),
   emergency_contact: z.string().optional(),
   medical_history: z.string().optional(),
@@ -44,6 +46,8 @@ export function AddPatientForm({
 }: {
   onSubmit?: (data: PatientFormData) => void;
 }) {
+  const { post, loading, error, data } = useApi();
+
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
     defaultValues: {
@@ -63,18 +67,8 @@ export function AddPatientForm({
 
   const onSubmitHandler = async (data: PatientFormData) => {
     try {
-      let patient = await fetch("/api/patients", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      if (!patient.ok) {
-        throw new Error("Failed to add patient");
-      }
-      const patientData = await patient.json();
-      onSubmit?.(patientData);
+      let result = await post("/api/patients", data);
+      onSubmit?.(result);
       toast(
         `Patient ${data.first_name} ${data.last_name} created successfully.`,
         {
@@ -88,6 +82,14 @@ export function AddPatientForm({
       );
     } catch (error) {
       console.error("Error adding patient:", error);
+      toast(`Failed to create patient..`, {
+        description: "",
+        action: {
+          label: "ok",
+          onClick: () => toast.dismiss(),
+        },
+        position: "top-center",
+      });
     }
   };
 
@@ -204,7 +206,7 @@ export function AddPatientForm({
         </div>
 
         <div className="flex justify-end pt-2">
-          <Button type="submit">Save Patient</Button>
+          <Button type="submit">{loading && <Spinner />}Save Patient</Button>
         </div>
       </form>
     </Form>

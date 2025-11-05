@@ -20,13 +20,15 @@ import { FormDialog } from "@/components/commoncomp/FormDialog";
 import { AddPatientForm } from "@/components/patients/AddPatient";
 import { fetcherPost } from "@/utils";
 import { Toaster } from "@/components/ui/sonner";
+import { AddVisitForm } from "@/components/patients/AddVisit";
 
 export default function PatientsPage() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [includeRecentVisits, setIncludeRecentVisits] = useState(5);
   const [timePeriodDays, setTimePeriodDays] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [openPatientForm, setOpenPatientForm] = useState(false);
+  const [openVisitForm, setOpenVisitForm] = useState(false);
 
   interface PatientSummaryBody {
     patient_id: string;
@@ -70,15 +72,18 @@ export default function PatientsPage() {
             Patients
           </h1>
           <FormDialog
+            dialogSize="lg"
             title="Add New Patient"
             description="Fill out the details below to add a patient."
-            open={open}
-            onOpenChange={setOpen}
+            open={openPatientForm}
+            onOpenChange={setOpenPatientForm}
             trigger={
-              <Button onClick={() => setOpen(true)}>+ Add Patient</Button>
+              <Button onClick={() => setOpenPatientForm(true)}>
+                <Plus /> Add Patient
+              </Button>
             }
           >
-            <AddPatientForm onSubmit={(data) => setOpen(false)} />
+            <AddPatientForm onSubmit={(data) => setOpenPatientForm(false)} />
           </FormDialog>
         </div>
         <div className="mt-3 w-full">
@@ -87,7 +92,26 @@ export default function PatientsPage() {
 
         {selectedPatient && (
           <div className="mt-5 w-full">
-            <h2 className="text-2xl font-semibold">Selected Patient</h2>
+            <div className="flex items-center gap-4 w-full">
+              <h2 className="text-2xl font-semibold">Selected Patient</h2>
+              <FormDialog
+                dialogSize="xl"
+                title="Add New Visit"
+                description="Fill out the details below to add a visit."
+                open={openVisitForm}
+                onOpenChange={setOpenVisitForm}
+                trigger={
+                  <Button onClick={() => setOpenVisitForm(true)}>
+                    <Plus /> Add Visit
+                  </Button>
+                }
+              >
+                <AddVisitForm
+                  onSubmit={(data) => setOpenVisitForm(false)}
+                  patient_id={selectedPatient.id}
+                />
+              </FormDialog>
+            </div>
             <div className="flex items-center gap-4">
               <p className="mt-2 text-lg">
                 {selectedPatient.full_name} (Age: {selectedPatient.age})
