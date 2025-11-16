@@ -12,7 +12,7 @@ export default function ChatScreen({
   patientId,
   visitId,
 }: {
-  patientId: string | null;
+  patientId: number | null;
   visitId: string | null;
 }) {
   const [messages, setMessages] = useState<any[]>([]);

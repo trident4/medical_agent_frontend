@@ -73,14 +73,14 @@ export function AddVisitForm({
       follow_up_instructions: "",
       doctor_notes: "",
       vital_signs: {
-        blood_pressure_systolic: "",
-        blood_pressure_diastolic: "",
-        heart_rate: "",
-        temperature: "",
-        respiratory_rate: "",
-        oxygen_saturation: "",
-        weight: "",
-        height: "",
+        blood_pressure_systolic: 0,
+        blood_pressure_diastolic: 0,
+        heart_rate: 0,
+        temperature: 0,
+        respiratory_rate: 0,
+        oxygen_saturation: 0,
+        weight: 0,
+        height: 0,
       }, // empty object for key-value pairs
       lab_results: [], // empty array of lab results
       duration_minutes: undefined, // optional field
@@ -89,6 +89,18 @@ export function AddVisitForm({
 
   const onSubmitHandler = async (data: VisitFormData) => {
     try {
+      // Clean up vital_signs: remove keys with invalid or empty values (only keep valid integers)
+      // const cleanedVitalSigns = Object.fromEntries(
+      //   Object.entries(data.vital_signs).filter(([key, value]) => {
+      //     if (typeof value === "string") {
+      //       const num = parseInt(value, 10);
+      //       return !isNaN(num) && value.trim() !== "";
+      //     }
+      //     return typeof value === "number" && Number.isInteger(value);
+      //   })
+      // );
+      // data.vital_signs = cleanedVitalSigns;
+      console.log("The data is", data);
       let result = await post("/api/visits", data);
       onSubmit?.(result);
       toast(`Visit recorded successfully.`, {

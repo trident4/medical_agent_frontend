@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import PatientSearch from "./patient-search";
 import { Patient } from "./types";
 import { Button } from "@/components/ui/button";
@@ -15,9 +15,9 @@ import useSWR from "swr";
 import { Spinner } from "@/components/ui/spinner";
 import ReactMarkdown from "react-markdown";
 import ChatScreen from "@/components/chat/ChatScree";
-import { Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, LogOut } from "lucide-react";
 import { FormDialog } from "@/components/commoncomp/FormDialog";
-import { AddPatientForm } from "@/components/patients/AddPatient";
+import { PatientForm } from "@/components/patients/PatientForm";
 import { fetcherPost } from "@/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { AddVisitForm } from "@/components/patients/AddVisit";
@@ -27,29 +27,36 @@ export default function PatientsPage() {
   const [includeRecentVisits, setIncludeRecentVisits] = useState(5);
   const [timePeriodDays, setTimePeriodDays] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
-  const [openPatientForm, setOpenPatientForm] = useState(false);
   const [openVisitForm, setOpenVisitForm] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const [patientDialogOpen, setPatientDialogOpen] = useState(false);
+  const [patientDialogMode, setPatientDialogMode] = useState<
+    "add" | "edit" | "view"
+  >("add");
+  const [selectedPatientForDialog, setSelectedPatientForDialog] =
+    useState<Patient | null>(null);
 
   interface PatientSummaryBody {
-    patient_id: string;
+    patient_id: number | null;
     include_recent_visits: number;
     time_period_days: number;
   }
   const [patientSummaryBody, setPatientSummaryBody] =
     useState<PatientSummaryBody>({
-      patient_id: "",
+      patient_id: null,
       include_recent_visits: includeRecentVisits,
       time_period_days: timePeriodDays,
     });
 
   const handleSummaryRequest = () => {
     setPatientSummaryBody({
-      patient_id: selectedPatient?.patient_id || "",
+      patient_id: selectedPatient?.id || null,
       include_recent_visits: includeRecentVisits,
       time_period_days: timePeriodDays,
     });
   };
-  const {
+  let {
     data: summaryData,
     error: summaryError,
     isLoading: summaryLoading,
@@ -64,128 +71,225 @@ export default function PatientsPage() {
     }
   }, [summaryData]);
 
-  return (
-    <div className="flex min-h-screen  items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-6xl flex-col items-center justify-start py-5 px-5 bg-white dark:bg-black sm:items-start">
-        <div className="flex w-full items-center justify-between">
-          <h1 className="max-w-xs text-3xl font-semibold  tracking-tight text-black dark:text-zinc-50 ">
-            Patients
-          </h1>
-          <FormDialog
-            dialogSize="lg"
-            title="Add New Patient"
-            description="Fill out the details below to add a patient."
-            open={openPatientForm}
-            onOpenChange={setOpenPatientForm}
-            trigger={
-              <Button onClick={() => setOpenPatientForm(true)}>
-                <Plus /> Add Patient
-              </Button>
-            }
-          >
-            <AddPatientForm onSubmit={(data) => setOpenPatientForm(false)} />
-          </FormDialog>
-        </div>
-        <div className="mt-3 w-full">
-          <PatientSearch onSelect={(patient) => setSelectedPatient(patient)} />
-        </div>
+  useEffect(() => {
+    // Reset summary data when selected patient changes
+    setPatientSummaryBody({
+      patient_id: "",
+      include_recent_visits: includeRecentVisits,
+      time_period_days: timePeriodDays,
+    });
+    setShowSummary(false);
+  }, [selectedPatient]);
 
-        {selectedPatient && (
-          <div className="mt-5 w-full">
-            <div className="flex items-center gap-4 w-full">
-              <h2 className="text-2xl font-semibold">Selected Patient</h2>
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/logout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        // Redirect to login after successful logout
+        window.location.href = "/login";
+      } else {
+        console.error("Logout failed");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  const handleView = (patient: Patient) => {
+    setSelectedPatientForDialog(patient);
+    setPatientDialogMode("view");
+    setPatientDialogOpen(true);
+  };
+
+  const handleEdit = (patient: Patient) => {
+    setSelectedPatientForDialog(patient);
+    setPatientDialogMode("edit");
+    setPatientDialogOpen(true);
+  };
+
+  const handleDelete = (patient: Patient) => {
+    setSelectedPatientForDialog(patient);
+    setPatientDialogMode("view"); // Use view mode for delete
+    setPatientDialogOpen(true);
+  };
+
+  const handleAdd = () => {
+    setSelectedPatientForDialog(null);
+    setPatientDialogMode("add");
+    setPatientDialogOpen(true);
+  };
+
+  return (
+    <div className="flex h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+      <main className="flex h-screen w-full max-w-6xl flex-col bg-white dark:bg-black">
+        {/* Fixed Header Section */}
+        <div className="flex-shrink-0 border-b py-5 px-5">
+          <div className="flex w-full items-center justify-between">
+            <h1 className="max-w-xs text-3xl font-semibold tracking-tight text-black dark:text-zinc-50">
+              Patients
+            </h1>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                variant="ghost"
+                size="sm"
+              >
+                {isCollapsed ? <ChevronDown /> : <ChevronUp />}
+              </Button>
               <FormDialog
-                dialogSize="xl"
-                title="Add New Visit"
-                description="Fill out the details below to add a visit."
-                open={openVisitForm}
-                onOpenChange={setOpenVisitForm}
+                dialogSize="lg"
+                title={`${
+                  patientDialogMode.charAt(0).toUpperCase() +
+                  patientDialogMode.slice(1)
+                } Patient`}
+                description={
+                  patientDialogMode === "add"
+                    ? "Fill out the details below to add a patient."
+                    : ""
+                }
+                open={patientDialogOpen}
+                onOpenChange={setPatientDialogOpen}
                 trigger={
-                  <Button onClick={() => setOpenVisitForm(true)}>
-                    <Plus /> Add Visit
+                  <Button onClick={handleAdd}>
+                    <Plus /> Add Patient
                   </Button>
                 }
               >
-                <AddVisitForm
-                  onSubmit={(data) => setOpenVisitForm(false)}
-                  patient_id={selectedPatient.id}
+                <PatientForm
+                  mode={patientDialogMode}
+                  patient={selectedPatientForDialog}
+                  onSubmit={() => setPatientDialogOpen(false)}
                 />
               </FormDialog>
-            </div>
-            <div className="flex items-center gap-4">
-              <p className="mt-2 text-lg">
-                {selectedPatient.full_name} (Age: {selectedPatient.age})
-                (Visits: {selectedPatient.visit_count}) (Last Visit:{" "}
-                {new Date(selectedPatient.last_visit).toLocaleDateString()})
-              </p>
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button className="cursor-pointer">Summary</Button>
-                </PopoverTrigger>
-                <PopoverContent>
-                  <Label className="mb-2 mt-1">Number of Recent Visits</Label>
-                  <Input
-                    type="number"
-                    placeholder="Include recent visits"
-                    value={includeRecentVisits}
-                    onInput={(e) => setIncludeRecentVisits(e.target.value)}
-                  />
-                  <Label className="mb-2  mt-2">Time Period (Days)</Label>
-                  <Input
-                    type="number"
-                    placeholder="Include time period in days"
-                    value={timePeriodDays}
-                    onInput={(e) => setTimePeriodDays(e.target.value)}
-                  />
-                  <Button
-                    className="mt-2 cursor-pointer btn-sm"
-                    onClick={handleSummaryRequest}
-                  >
-                    {summaryLoading ? <Spinner /> : ""} Get Summary
-                  </Button>
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-        )}
-        {summaryData && (
-          <div className="mt-5 w-full">
-            <div className="flex items-center">
-              <h2 className="text-2xl font-semibold">Patient Summary</h2>
               <Button
+                onClick={handleLogout}
                 variant="outline"
-                title={showSummary ? "Hide Summary" : "Show Summary"}
-                className="ml-2 cursor-pointer"
-                size={"sm"}
-                onClick={() => setShowSummary(!showSummary)}
+                size="sm"
+                className="ml-2"
               >
-                {showSummary ? "Hide" : "Show"}
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
               </Button>
             </div>
-            {showSummary && (
-              <div className="prose dark:prose-invert max-w-none">
-                <ReactMarkdown>{summaryData.summary}</ReactMarkdown>
+          </div>
+          {!isCollapsed && (
+            <>
+              <div className="mt-3 w-full">
+                <PatientSearch
+                  onSelect={(patient) => setSelectedPatient(patient)}
+                  onView={handleView}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  isPatientSelected={selectedPatient ? true : false}
+                />
               </div>
-            )}
-          </div>
-        )}
+            </>
+          )}
+          {selectedPatient && (
+            <div className="mt-5 w-full">
+              <div className="flex items-center gap-4 w-full">
+                <h2 className="text-2xl font-semibold">Selected Patient</h2>
+                <FormDialog
+                  dialogSize="lg"
+                  title="Add New Visit"
+                  description="Fill out the details below to add a visit."
+                  open={openVisitForm}
+                  onOpenChange={setOpenVisitForm}
+                  trigger={
+                    <Button onClick={() => setOpenVisitForm(true)}>
+                      <Plus /> Add Visit
+                    </Button>
+                  }
+                >
+                  <AddVisitForm
+                    onSubmit={(data) => setOpenVisitForm(false)}
+                    patient_id={selectedPatient.id}
+                  />
+                </FormDialog>
+              </div>
+              <div className="flex items-center gap-4">
+                <p className="mt-2 text-lg">
+                  {selectedPatient.full_name} (Age: {selectedPatient.age})
+                  (Visits: {selectedPatient.visit_count}) (Last Visit:{" "}
+                  {new Date(selectedPatient.last_visit).toLocaleDateString()})
+                </p>
 
-        {selectedPatient && (
-          <div className="mt-5 w-full">
-            {" "}
-            <h2 className="text-2xl font-semibold mb-3">Chat with Patient</h2>
-            <ChatScreen
-              patientId={selectedPatient?.patient_id || null}
-              visitId={null}
-            />
-          </div>
-        )}
-        {selectedPatient === null && (
-          <div className="mt-10 text-center text-zinc-500">
-            Please select a patient to view details and chat.
-          </div>
-        )}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button className="cursor-pointer">Summary</Button>
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <Label className="mb-2 mt-1">Number of Recent Visits</Label>
+                    <Input
+                      type="number"
+                      placeholder="Include recent visits"
+                      value={includeRecentVisits}
+                      onInput={(e) => setIncludeRecentVisits(e.target.value)}
+                    />
+                    <Label className="mb-2 mt-2">Time Period (Days)</Label>
+                    <Input
+                      type="number"
+                      placeholder="Include time period in days"
+                      value={timePeriodDays}
+                      onInput={(e) => setTimePeriodDays(e.target.value)}
+                    />
+                    <Button
+                      className="mt-2 cursor-pointer btn-sm"
+                      onClick={handleSummaryRequest}
+                    >
+                      {summaryLoading ? <Spinner /> : ""} Get Summary
+                    </Button>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Scrollable Content Section */}
+        <div className="flex-1 overflow-y-auto px-5 py-5">
+          {summaryData && (
+            <div className="mt-5 w-full">
+              <div className="flex items-center">
+                <h2 className="text-2xl font-semibold">Patient Summary</h2>
+                <Button
+                  variant="outline"
+                  title={showSummary ? "Hide Summary" : "Show Summary"}
+                  className="ml-2 cursor-pointer"
+                  size={"sm"}
+                  onClick={() => setShowSummary(!showSummary)}
+                >
+                  {showSummary ? "Hide" : "Show"}
+                </Button>
+              </div>
+              {showSummary && (
+                <div className="prose dark:prose-invert max-w-none">
+                  <ReactMarkdown>{summaryData.summary}</ReactMarkdown>
+                </div>
+              )}
+            </div>
+          )}
+
+          {selectedPatient && (
+            <div className="mt-5 w-full">
+              {" "}
+              <h2 className="text-2xl font-semibold mb-3">Chat with Patient</h2>
+              <ChatScreen
+                patientId={selectedPatient?.id || null}
+                visitId={null}
+              />
+            </div>
+          )}
+          {selectedPatient === null && (
+            <div className="mt-10 text-center text-zinc-500">
+              Please select a patient to view details and chat.
+            </div>
+          )}
+        </div>
+
         <Toaster />
       </main>
     </div>

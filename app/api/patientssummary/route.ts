@@ -1,5 +1,6 @@
 import { BASE_BACKEND_URL } from "@/constants";
-import { do_post } from "@/utils";
+import { do_post, get_auth } from "@/utils";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 // {
@@ -24,9 +25,11 @@ import { NextResponse } from "next/server";
 
 export async function POST(Request: Request) {
   const body = await Request.json();
+  const token = (await cookies()).get("token")?.value || "";
   let patients = await do_post(
     `${BASE_BACKEND_URL}/api/v1/agents/health-summary`,
-    body
+    body,
+    get_auth(token)
   );
   return NextResponse.json(patients);
 }

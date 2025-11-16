@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { useApi } from "@/lib/hooks/api";
 import { Spinner } from "../ui/spinner";
+import { Patient } from "@/app/patients/types";
 
 const patientSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -41,59 +42,101 @@ const patientSchema = z.object({
 
 type PatientFormData = z.infer<typeof patientSchema>;
 
-export function AddPatientForm({
-  onSubmit,
-}: {
+interface PatientFormProps {
+  mode: "add" | "edit" | "view";
+  patient?: Patient | null;
   onSubmit?: (data: PatientFormData) => void;
-}) {
-  const { post, loading, error, data } = useApi();
+}
 
+export function PatientForm({ mode, patient, onSubmit }: PatientFormProps) {
+  const { post, put, del, loading, error, data } = useApi();
+  console.log("The patient is sent", patient);
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
-    defaultValues: {
-      first_name: "",
-      last_name: "",
-      date_of_birth: "",
-      gender: "",
-      phone: "",
-      email: "",
-      address: "",
-      emergency_contact: "",
-      medical_history: "",
-      allergies: "",
-      current_medications: "",
-    },
+    defaultValues: patient
+      ? {
+          first_name: patient.first_name || "",
+          last_name: patient.last_name || "",
+          date_of_birth: patient.date_of_birth || "",
+          gender: patient.gender || "",
+          phone: patient.phone || "",
+          email: patient.email || "",
+          address: patient.address || "",
+          emergency_contact: patient.emergency_contact || "",
+          medical_history: patient.medical_history || "",
+          allergies: patient.allergies || "",
+          current_medications: patient.current_medications || "",
+        }
+      : {
+          first_name: "",
+          last_name: "",
+          date_of_birth: "",
+          gender: "",
+          phone: "",
+          email: "",
+          address: "",
+          emergency_contact: "",
+          medical_history: "",
+          allergies: "",
+          current_medications: "",
+        },
   });
 
   const onSubmitHandler = async (data: PatientFormData) => {
     try {
-      let result = await post("/api/patients", data);
-      onSubmit?.(result);
-      toast(
-        `Patient ${data.first_name} ${data.last_name} created successfully.`,
-        {
+      if (mode === "add") {
+        let result = await post("/api/patients", data);
+        toast(`Patient created successfully.`, {
           description: "",
-          action: {
-            label: "ok",
-            onClick: () => toast.dismiss(),
-          },
+          action: { label: "ok", onClick: () => toast.dismiss() },
           position: "top-center",
-        }
-      );
+        });
+        onSubmit?.(result);
+      } else if (mode === "edit") {
+        let result = await put(`/api/patients/${patient?.id}`, data);
+        toast(`Patient updated successfully.`, {
+          description: "",
+          action: { label: "ok", onClick: () => toast.dismiss() },
+          position: "top-center",
+        });
+        onSubmit?.(result);
+      }
     } catch (error) {
-      console.error("Error adding patient:", error);
-      toast(`Failed to create patient..`, {
+      console.error("Error:", error);
+      toast(`Failed to ${mode} patient.`, {
         description: "",
-        action: {
-          label: "ok",
-          onClick: () => toast.dismiss(),
-        },
+        action: { label: "ok", onClick: () => toast.dismiss() },
         position: "top-center",
       });
     }
   };
 
-  // 🧩 Field configuration array
+  const handleDelete = async () => {
+    if (confirm(`Delete ${patient?.full_name}?`)) {
+      try {
+        await del(`/api/patients/${patient?.id}`);
+        toast(`Patient deleted successfully.`, {
+          description: "",
+          action: { label: "ok", onClick: () => toast.dismiss() },
+          position: "top-center",
+        });
+        onSubmit?.(null); // Close dialog
+      } catch (error) {
+        console.error("Error deleting patient:", error);
+        toast(`Failed to delete patient.`, {
+          description: "",
+          action: { label: "ok", onClick: () => toast.dismiss() },
+          position: "top-center",
+        });
+      }
+    }
+  };
+
+  const isDisabled = mode === "view";
+  const submitLabel =
+    mode === "add" ? "Save Patient" : mode === "edit" ? "Update Patient" : "";
+
+  // Field configuration (same as before)
   const fields = [
     {
       name: "first_name",
@@ -160,7 +203,7 @@ export function AddPatientForm({
             <FormField
               key={fieldDef.name}
               control={form.control}
-              disabled={fieldDef.disabled}
+              disabled={isDisabled || fieldDef.disabled}
               name={fieldDef.name as keyof PatientFormData}
               render={({ field }) => (
                 <FormItem
@@ -174,6 +217,7 @@ export function AddPatientForm({
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
+                        disabled={isDisabled}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -205,8 +249,18 @@ export function AddPatientForm({
           ))}
         </div>
 
-        <div className="flex justify-end pt-2">
-          <Button type="submit">{loading && <Spinner />}Save Patient</Button>
+        <div className="flex justify-between pt-2">
+          {mode === "view" && (
+            <Button type="button" variant="destructive" onClick={handleDelete}>
+              Delete Patient
+            </Button>
+          )}
+          {mode !== "view" && (
+            <Button type="submit">
+              {loading && <Spinner />}
+              {submitLabel}
+            </Button>
+          )}
         </div>
       </form>
     </Form>

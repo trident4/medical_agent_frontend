@@ -1,6 +1,7 @@
 import { BASE_BACKEND_URL } from "@/constants";
-import { do_post } from "@/utils";
+import { do_post, get_auth } from "@/utils";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 // {
 //     "patient_id": "PAT001",
@@ -21,9 +22,14 @@ import { NextResponse } from "next/server";
 //     "last_visit_date": "2025-10-27T09:45:00",
 //     "generated_at": "2025-11-01T05:19:06.013987"
 // }
-
-export async function POST(Request: Request) {
-  const body = await Request.json();
-  let answer = await do_post(`${BASE_BACKEND_URL}/api/v1/agents/ask`, body);
+export async function POST(request: Request) {
+  const body = await request.json();
+  const cookieStore = cookies();
+  // Assuming you need to send the token in headers to the backend
+  let answer = await do_post(
+    `${BASE_BACKEND_URL}/api/v1/agents/ask`,
+    body,
+    get_auth(cookieStore)
+  );
   return NextResponse.json(answer);
 }
