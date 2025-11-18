@@ -47,14 +47,11 @@ export const do_post = async (url: string, data: any, token: string) => {
 
     if (!res.ok) {
       const errorText = await res.text();
-      throw new Error(
-        `Fetch failed: ${res.status} ${res.statusText} - ${errorText}`
-      );
+      throw errorText;
     }
 
     return res.json();
   } catch (error) {
-    console.error("POST error:", error);
     throw error;
   }
 };
@@ -148,3 +145,20 @@ export function deleteCookie(name: string): void {
 
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 }
+
+export const handleLogout = async () => {
+  try {
+    const response = await fetch("/api/logout", {
+      method: "POST",
+    });
+
+    if (response.ok) {
+      // Redirect to login after successful logout
+      window.location.href = "/login";
+    } else {
+      console.error("Logout failed");
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
+};

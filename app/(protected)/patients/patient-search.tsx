@@ -64,13 +64,21 @@ export default function PatientSearch({
     };
     setPatientsUrl(buildUrl(DEFAULT_PATIENTS_URL, queryParams));
   }, [page, debouncedQuery]);
-
   let {
     data,
-    error,
+    error: swrError,
     isLoading,
-  }: { data: PatientResponse | ApiError; error: any; isLoading: boolean } =
-    useSWR(patientsUrl, fetcher);
+  }: {
+    data: PatientResponse | { status: number; error: string };
+    error: any;
+    isLoading: boolean;
+  } = useSWR(patientsUrl, fetcher);
+
+  let error: string | null = null;
+
+  if (data && "status" in data && data.status !== 200) {
+    error = (data as ApiError).error as string;
+  }
 
   if (data && !Array.isArray(data) && data.status !== 200) {
     error = data.error;

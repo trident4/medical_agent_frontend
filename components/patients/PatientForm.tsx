@@ -24,7 +24,7 @@ import {
 import { toast } from "sonner";
 import { useApi } from "@/lib/hooks/api";
 import { Spinner } from "../ui/spinner";
-import { Patient } from "@/app/patients/types";
+import { Patient } from "@/app/(protected)/patients/types";
 
 const patientSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
