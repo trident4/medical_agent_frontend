@@ -16,13 +16,17 @@ export default function ProtectedLayout({
       <div className="flex min-h-screen w-full bg-zinc-50">
         <AppSidebar />
         <main className="flex-1 w-full">
-          <header className="border-b py-4 px-5 flex items-center justify-between">
+          <header className="border-b bg-white py-4 px-6 flex items-center justify-between">
             <div className="flex items-center">
               <SidebarTrigger />
               <h1 className="ml-4 text-2xl font-semibold">Dashboard</h1>
             </div>
           </header>
-          <div className="p-5">{children}</div>
+          <div className="p-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              {children}
+            </div>
+          </div>
         </main>
       </div>
     </SidebarProvider>

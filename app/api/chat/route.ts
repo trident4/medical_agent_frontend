@@ -23,13 +23,28 @@ import { cookies } from "next/headers";
 //     "generated_at": "2025-11-01T05:19:06.013987"
 // }
 export async function POST(request: Request) {
-  const body = await request.json();
-  const cookieStore = cookies();
-  // Assuming you need to send the token in headers to the backend
-  let answer = await do_post(
-    `${BASE_BACKEND_URL}/api/v1/agents/ask`,
-    body,
-    get_auth(cookieStore)
-  );
-  return NextResponse.json(answer);
+  try {
+    const body = await request.json();
+    const cookieStore = cookies();
+    // Assuming you need to send the token in headers to the backend
+    let answer = await do_post(
+      `${BASE_BACKEND_URL}/api/v1/agents/ask`,
+      body,
+      get_auth(cookieStore)
+    );
+    return NextResponse.json(answer);
+  } catch (error: any) {
+    // Check if it's our custom HttpError
+    if (error.status) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    // For other errors, return 500
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 }

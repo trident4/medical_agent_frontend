@@ -1,3 +1,14 @@
+// Custom error class to include HTTP status code
+export class HttpError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'HttpError';
+    this.status = status;
+  }
+}
+
 export function get_auth(token: string) {
   try {
     return `Bearer ${token.replaceAll('"', "")}`;
@@ -19,13 +30,25 @@ export const do_get = async (url: string, token: string) => {
     const res = await fetch(url, {
       method: "GET",
       headers: options(token).headers,
-      // Important: Add cache behavior for Next.js (optional)
-      cache: "no-store", // or "force-cache", depending on your need
+      cache: "no-store",
     });
 
     if (!res.ok) {
-      const errorBody = await res.text();
-      return { error: errorBody, status: res.status };
+      let errorMessage = `${res.status} ${res.statusText}`;
+      try {
+        const errorBody = await res.json();
+        // FastAPI typically returns errors in { "detail": "message" } format
+        if (errorBody.detail) {
+          errorMessage = typeof errorBody.detail === 'string'
+            ? errorBody.detail
+            : JSON.stringify(errorBody.detail);
+        }
+      } catch {
+        // If JSON parsing fails, try to get text
+        const errorText = await res.text();
+        if (errorText) errorMessage = errorText;
+      }
+      throw new HttpError(errorMessage, res.status);
     }
 
     return res.json();
@@ -41,17 +64,30 @@ export const do_post = async (url: string, data: any, token: string) => {
       method: "POST",
       headers: options(token).headers,
       body: JSON.stringify(data),
-      // Important: Add cache behavior for Next.js (optional)
-      cache: "no-store", // or "force-cache", depending on your need
+      cache: "no-store",
     });
 
     if (!res.ok) {
-      const errorText = await res.text();
-      throw errorText;
+      let errorMessage = `${res.status} ${res.statusText}`;
+      try {
+        const errorBody = await res.json();
+        // FastAPI typically returns errors in { "detail": "message" } format
+        if (errorBody.detail) {
+          errorMessage = typeof errorBody.detail === 'string'
+            ? errorBody.detail
+            : JSON.stringify(errorBody.detail);
+        }
+      } catch {
+        // If JSON parsing fails, try to get text
+        const errorText = await res.text();
+        if (errorText) errorMessage = errorText;
+      }
+      throw new HttpError(errorMessage, res.status);
     }
 
     return res.json();
   } catch (error) {
+    console.error("POST error:", error);
     throw error;
   }
 };
@@ -61,18 +97,28 @@ export const do_put = async (url: string, data: any, token: string) => {
       method: "PUT",
       headers: options(token).headers,
       body: JSON.stringify(data),
-      // Important: Add cache behavior for Next.js (optional)
-      cache: "no-store", // or "force-cache", depending on your need
+      cache: "no-store",
     });
 
     if (!res.ok) {
       if (res.status === 401) {
         deleteCookie("token");
       }
-      const errorText = await res.text();
-      throw new Error(
-        `Fetch failed: ${res.status} ${res.statusText} - ${errorText}`
-      );
+      let errorMessage = `${res.status} ${res.statusText}`;
+      try {
+        const errorBody = await res.json();
+        // FastAPI typically returns errors in { "detail": "message" } format
+        if (errorBody.detail) {
+          errorMessage = typeof errorBody.detail === 'string'
+            ? errorBody.detail
+            : JSON.stringify(errorBody.detail);
+        }
+      } catch {
+        // If JSON parsing fails, try to get text
+        const errorText = await res.text();
+        if (errorText) errorMessage = errorText;
+      }
+      throw new HttpError(errorMessage, res.status);
     }
 
     return res.json();
@@ -87,15 +133,25 @@ export const do_delete = async (url: string, token: string) => {
     const res = await fetch(url, {
       method: "DELETE",
       headers: options(token).headers,
-      // Important: Add cache behavior for Next.js (optional)
-      cache: "no-store", // or "force-cache", depending on your need
+      cache: "no-store",
     });
 
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(
-        `Fetch failed: ${res.status} ${res.statusText} - ${errorText}`
-      );
+      let errorMessage = `${res.status} ${res.statusText}`;
+      try {
+        const errorBody = await res.json();
+        // FastAPI typically returns errors in { "detail": "message" } format
+        if (errorBody.detail) {
+          errorMessage = typeof errorBody.detail === 'string'
+            ? errorBody.detail
+            : JSON.stringify(errorBody.detail);
+        }
+      } catch {
+        // If JSON parsing fails, try to get text
+        const errorText = await res.text();
+        if (errorText) errorMessage = errorText;
+      }
+      throw new HttpError(errorMessage, res.status);
     }
 
     // DELETE APIs may return JSON or no content (e.g., 204 No Content)

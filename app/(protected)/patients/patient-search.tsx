@@ -23,10 +23,19 @@ import { Loader2, Eye, Edit, Trash2 } from "lucide-react";
 import { Patient, PatientResponse } from "./types";
 import { ApiError } from "@/commontypes";
 import { toast } from "sonner";
-import { buildUrl } from "@/utils";
+import { buildUrl, handleLogout } from "@/utils";
 import { Button } from "@/components/ui/button";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const errorData = await res.json();
+    const error: any = new Error(errorData.error || 'An error occurred');
+    error.status = res.status;
+    throw error;
+  }
+  return res.json();
+};
 
 export default function PatientSearch({
   onSelect,
@@ -64,41 +73,29 @@ export default function PatientSearch({
     };
     setPatientsUrl(buildUrl(DEFAULT_PATIENTS_URL, queryParams));
   }, [page, debouncedQuery]);
-  let {
+  const {
     data,
     error: swrError,
     isLoading,
-  }: {
-    data: PatientResponse | { status: number; error: string };
-    error: any;
-    isLoading: boolean;
-  } = useSWR(patientsUrl, fetcher);
+  } = useSWR<PatientResponse>(patientsUrl, fetcher, {
+    // onError: (error) => {
+    //   // Handle errors from the API
+    //   const errorMessage = error?.error || error?.message || "Failed to load patients";
+    //   toast.error(errorMessage, {
+    //     position: "top-center",
+    //     duration: 4000,
+    //   });
+    //   // if (error.status === 401) {
+    //   //   handleLogout();
+    //   // }
+    // },
+    // // Optionally add these for better UX
+    // revalidateOnFocus: false,
+    // shouldRetryOnError: false,
+  });
 
-  let error: string | null = null;
-
-  if (data && "status" in data && data.status !== 200) {
-    error = (data as ApiError).error as string;
-  }
-
-  if (data && !Array.isArray(data) && data.status !== 200) {
-    error = data.error;
-  }
-
-  const results = (data as PatientResponse)?.items || [];
-  const pagination = data as PatientResponse;
-
-  useEffect(() => {
-    if (error) {
-      toast(error, {
-        description: "",
-        action: {
-          label: "ok",
-          onClick: () => toast.dismiss(),
-        },
-        position: "top-center",
-      });
-    }
-  }, [error]);
+  const results = data?.items || [];
+  const pagination = data;
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -108,7 +105,6 @@ export default function PatientSearch({
     patientId: string
   ): Promise<Patient | null> => {
     try {
-      console.log("The patient id is", patientId);
       const response = await fetch(`/api/patients/${patientId}`);
       if (response.ok) {
         return await response.json();
@@ -254,13 +250,13 @@ export default function PatientSearch({
 
         <CommandList key={debouncedQuery}>
           <CommandEmpty>
-            {error
+            {swrError
               ? "Failed to load patients."
               : isLoading
-              ? "Loading..."
-              : isPatientSelected
-              ? ""
-              : "No patient selected."}
+                ? "Loading..."
+                : isPatientSelected
+                  ? ""
+                  : "No patient selected."}
           </CommandEmpty>
 
           {results.length > 0 && isFocused && (

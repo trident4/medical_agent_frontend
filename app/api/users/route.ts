@@ -4,29 +4,36 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  const { search, searchParams } = new URL(request.url);
-  const token = (await cookies()).get("token")?.value || "";
-
   try {
+    const { search, searchParams } = new URL(request.url);
+    const token = (await cookies()).get("token")?.value || "";
+
     let users = await do_get(
       `${BASE_BACKEND_URL}/api/v1/users/${search}`,
       get_auth(token)
     );
     return NextResponse.json(users);
-  } catch (error) {
-    console.error("Error fetching users:", error);
+  } catch (error: any) {
+    // Check if it's our custom HttpError
+    if (error.status) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    // For other errors, return 500
     return NextResponse.json(
-      { error: error.message || "Failed to fetch users" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const token = (await cookies()).get("token")?.value || "";
-
   try {
+    const body = await request.json();
+    const token = (await cookies()).get("token")?.value || "";
+
     let user = await do_post(
       `${BASE_BACKEND_URL}/api/v1/users/`,
       body,
@@ -34,8 +41,16 @@ export async function POST(request: Request) {
     );
     return NextResponse.json(user);
   } catch (error: any) {
+    // Check if it's our custom HttpError
+    if (error.status) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    // For other errors, return 500
     return NextResponse.json(
-      { error: JSON.parse(error).detail || "Failed to create user" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
