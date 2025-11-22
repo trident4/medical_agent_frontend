@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
       path: "/",
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
     });
 
     return NextResponse.json({ message: "Logged out successfully" });

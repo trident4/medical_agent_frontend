@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 export async function loginAction(formData: FormData) {
   const username = formData.get("username") as string;
   const password = formData.get("password") as string;
-  console.log("username", username, password);
+
   try {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login/json`,
@@ -22,11 +22,12 @@ export async function loginAction(formData: FormData) {
       return { error: data.message || "Login failed" };
     }
 
-    // Store token in cookies
+    // Store token in cookies with security attributes
     const cookieStore = await cookies();
     cookieStore.set("token", data.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      httpOnly: true, // Prevents XSS attacks
+      secure: process.env.NODE_ENV === "production", // HTTPS only in production
+      sameSite: "lax", // CSRF protection
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 

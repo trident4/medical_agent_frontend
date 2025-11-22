@@ -10,7 +10,6 @@ export async function GET(
   try {
     const { id } = await params; // Await params before destructuring
     const token = (await cookies()).get("token")?.value || "";
-    console.log("The patient id is", id);
     let patient = await do_get(
       `${BASE_BACKEND_URL}/api/v1/patients/${id}`,
       get_auth(token)
