@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const { search, searchParams } = new URL(request.url);
     const token = (await cookies()).get("token")?.value || "";
     let patients = await do_get(
-      `${BASE_BACKEND_URL}/api/v1/visits/${search}`,
+      `${BASE_BACKEND_URL}/visits/${search}`,
       get_auth(token)
     );
     return NextResponse.json(patients);
@@ -43,7 +43,7 @@ export async function POST(Request: Request) {
     const token = (await cookies()).get("token")?.value || "";
 
     let patients = await do_post(
-      `${BASE_BACKEND_URL}/api/v1/visits/`,
+      `${BASE_BACKEND_URL} /visits/`,
       body,
       get_auth(token)
     );

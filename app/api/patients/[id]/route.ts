@@ -11,7 +11,7 @@ export async function GET(
     const { id } = await params; // Await params before destructuring
     const token = (await cookies()).get("token")?.value || "";
     let patient = await do_get(
-      `${BASE_BACKEND_URL}/api/v1/patients/${id}`,
+      `${BASE_BACKEND_URL}/patients/${id}`,
       get_auth(token)
     );
     return NextResponse.json(patient);
@@ -41,7 +41,7 @@ export async function PUT(
     const token = (await cookies()).get("token")?.value || "";
 
     let updatedPatient = await do_put(
-      `${BASE_BACKEND_URL}/api/v1/patients/${id}`,
+      `${BASE_BACKEND_URL}/patients/${id}`,
       body,
       get_auth(token)
     );
@@ -71,7 +71,7 @@ export async function DELETE(
     const token = (await cookies()).get("token")?.value || "";
 
     let result = await do_delete(
-      `${BASE_BACKEND_URL}/api/v1/patients/${id}`,
+      `${BASE_BACKEND_URL}/patients/${id}`,
       get_auth(token)
     );
     return NextResponse.json(result);

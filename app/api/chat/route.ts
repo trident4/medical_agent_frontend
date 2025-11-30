@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     const cookieStore = cookies();
     // Assuming you need to send the token in headers to the backend
     let answer = await do_post(
-      `${BASE_BACKEND_URL}/api/v1/agents/ask`,
+      `${BASE_BACKEND_URL}/agents/ask`,
       body,
       get_auth(cookieStore)
     );

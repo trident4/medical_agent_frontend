@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const token = (await cookies()).get("token")?.value || "";
 
     let users = await do_get(
-      `${BASE_BACKEND_URL}/api/v1/users/${search}`,
+      `${BASE_BACKEND_URL}/users/${search}`,
       get_auth(token)
     );
     return NextResponse.json(users);
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const token = (await cookies()).get("token")?.value || "";
 
     let user = await do_post(
-      `${BASE_BACKEND_URL}/api/v1/users/`,
+      `${BASE_BACKEND_URL} /users/`,
       body,
       get_auth(token)
     );

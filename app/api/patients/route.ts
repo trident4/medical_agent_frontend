@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const { search, searchParams } = new URL(request.url);
     const token = (await cookies()).get("token")?.value || "";
     let patients = await do_get(
-      `${BASE_BACKEND_URL}/api/v1/patients/${search}`,
+      `${BASE_BACKEND_URL}/patients/${search}`,
       get_auth(token)
     );
     return NextResponse.json(patients);
@@ -44,7 +44,7 @@ export async function POST(Request: Request) {
     const token = (await cookies()).get("token")?.value || "";
 
     let patients = await do_post(
-      `${BASE_BACKEND_URL}/api/v1/patients/`,
+      `${BASE_BACKEND_URL}/patients/`,
       body,
       get_auth(token)
     );
@@ -78,7 +78,7 @@ export async function DELETE(request: Request) {
     const token = (await cookies()).get("token")?.value || "";
     // Assuming do_delete is available in @/utils, similar to do_get and do_post
     let result = await do_delete(
-      `${BASE_BACKEND_URL}/api/v1/patients/${id}`,
+      `${BASE_BACKEND_URL}/patients/${id}`,
       get_auth(token)
     );
     return NextResponse.json(result);

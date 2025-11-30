@@ -28,7 +28,7 @@ export async function POST(Request: Request) {
     const body = await Request.json();
     const token = (await cookies()).get("token")?.value || "";
     let patients = await do_post(
-      `${BASE_BACKEND_URL}/api/v1/agents/health-summary`,
+      `${BASE_BACKEND_URL}/agents/health-summary`,
       body,
       get_auth(token)
     );
