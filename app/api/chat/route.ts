@@ -25,12 +25,14 @@ import { cookies } from "next/headers";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
+    const tokenValue = cookieStore.get('token')?.value || "";
+    const token = get_auth(tokenValue);
     // Assuming you need to send the token in headers to the backend
     let answer = await do_post(
       `${BASE_BACKEND_URL}/agents/ask`,
       body,
-      get_auth(cookieStore)
+      token
     );
     return NextResponse.json(answer);
   } catch (error: any) {

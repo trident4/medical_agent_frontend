@@ -57,7 +57,7 @@ export default function PatientSearch({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [patientsUrl, setPatientsUrl] = useState(DEFAULT_PATIENTS_URL);
-  const [loadingPatientId, setLoadingPatientId] = useState<string | null>(null);
+  const [loadingPatientId, setLoadingPatientId] = useState<number | null>(null);
 
   // debounce to avoid too many API calls
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function PatientSearch({
   };
 
   const fetchPatientDetails = async (
-    patientId: string
+    patientId: number
   ): Promise<Patient | null> => {
     try {
       const response = await fetch(`/api/patients/${patientId}`);

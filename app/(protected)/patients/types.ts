@@ -4,6 +4,17 @@ export interface Patient {
   id: number;
   patient_id: string;
   full_name: string;
+  first_name?: string;
+  last_name?: string;
+  date_of_birth?: string;
+  gender?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  emergency_contact?: string;
+  medical_history?: string;
+  allergies?: string;
+  current_medications?: string;
   age: number;
   last_visit: string | null;
   visit_count: number;

@@ -74,7 +74,7 @@ export default function PatientsPage() {
   useEffect(() => {
     // Reset summary data when selected patient changes
     setPatientSummaryBody({
-      patient_id: "",
+      patient_id: null,
       include_recent_visits: includeRecentVisits,
       time_period_days: timePeriodDays,
     });
@@ -123,10 +123,9 @@ export default function PatientsPage() {
             </Button>
             <FormDialog
               dialogSize="lg"
-              title={`${
-                patientDialogMode.charAt(0).toUpperCase() +
+              title={`${patientDialogMode.charAt(0).toUpperCase() +
                 patientDialogMode.slice(1)
-              } Patient`}
+                } Patient`}
               description={
                 patientDialogMode === "add"
                   ? "Fill out the details below to add a patient."
@@ -187,7 +186,7 @@ export default function PatientsPage() {
               <p className="mt-2 text-lg">
                 {selectedPatient.full_name} (Age: {selectedPatient.age})
                 (Visits: {selectedPatient.visit_count}) (Last Visit:{" "}
-                {new Date(selectedPatient.last_visit).toLocaleDateString()})
+                {selectedPatient.last_visit ? new Date(selectedPatient.last_visit).toLocaleDateString() : 'N/A'})
               </p>
 
               <Popover>
@@ -200,14 +199,14 @@ export default function PatientsPage() {
                     type="number"
                     placeholder="Include recent visits"
                     value={includeRecentVisits}
-                    onInput={(e) => setIncludeRecentVisits(e.target.value)}
+                    onChange={(e) => setIncludeRecentVisits(parseInt(e.target.value) || 0)}
                   />
                   <Label className="mb-2 mt-2">Time Period (Days)</Label>
                   <Input
                     type="number"
                     placeholder="Include time period in days"
                     value={timePeriodDays}
-                    onInput={(e) => setTimePeriodDays(e.target.value)}
+                    onChange={(e) => setTimePeriodDays(parseInt(e.target.value) || 0)}
                   />
                   <Button
                     className="mt-2 cursor-pointer btn-sm"

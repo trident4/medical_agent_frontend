@@ -223,8 +223,8 @@ export function AddVisitForm({
                 <FormItem
                   className={
                     fieldDef.type === "textarea" ||
-                    fieldDef.type === "keyValue" ||
-                    fieldDef.type === "labResults"
+                      fieldDef.type === "keyValue" ||
+                      fieldDef.type === "labResults"
                       ? "col-span-2"
                       : ""
                   }
@@ -232,30 +232,14 @@ export function AddVisitForm({
                   <FormLabel>{fieldDef.label}</FormLabel>
                   <FormControl>
                     {fieldDef.type === "textarea" ? (
-                      <Textarea placeholder={fieldDef.label} {...field} />
-                    ) : fieldDef.type === "select" ? (
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder={`Select ${fieldDef.label}`}
-                            />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {fieldDef.options?.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Textarea
+                        placeholder={fieldDef.label}
+                        {...field}
+                        value={(field.value as string) || ""}
+                      />
                     ) : fieldDef.type === "keyValue" ? (
                       <div className="space-y-2">
-                        {Object.entries(field.value || {}).map(
+                        {Object.entries((field.value as Record<string, string | number>) || {}).map(
                           ([key, val], i) => (
                             <div key={i} className="flex gap-3 items-center">
                               <Input
@@ -263,7 +247,7 @@ export function AddVisitForm({
                                 value={key}
                                 onChange={(e) => {
                                   const newEntries = Object.entries(
-                                    field.value || {}
+                                    (field.value as Record<string, string | number>) || {}
                                   );
                                   newEntries[i] = [e.target.value, val];
                                   field.onChange(
@@ -276,7 +260,7 @@ export function AddVisitForm({
                                 value={val}
                                 onChange={(e) => {
                                   const newEntries = Object.entries(
-                                    field.value || {}
+                                    (field.value as Record<string, string | number>) || {}
                                   );
                                   newEntries[i] = [key, e.target.value];
                                   field.onChange(
@@ -290,7 +274,7 @@ export function AddVisitForm({
                                 size="icon-sm"
                                 onClick={() => {
                                   const newEntries = Object.entries(
-                                    field.value || {}
+                                    (field.value as Record<string, string | number>) || {}
                                   ).filter((_, idx) => idx !== i);
                                   field.onChange(
                                     Object.fromEntries(newEntries)
@@ -309,7 +293,7 @@ export function AddVisitForm({
                           size="sm"
                           onClick={() =>
                             field.onChange({
-                              ...(field.value || {}),
+                              ...((field.value as Record<string, string | number>) || {}),
                               "": "",
                             })
                           }
@@ -321,7 +305,7 @@ export function AddVisitForm({
                       <Input
                         type="number"
                         placeholder={fieldDef.label}
-                        value={field.value ?? ""}
+                        value={(field.value as number | undefined) ?? ""}
                         onChange={(e) =>
                           field.onChange(
                             e.target.value === ""
@@ -332,7 +316,7 @@ export function AddVisitForm({
                       />
                     ) : fieldDef.type === "labResults" ? (
                       <div className="space-y-2">
-                        {(field.value || [])?.map((lab, i) => (
+                        {((field.value as any[]) || [])?.map((lab, i) => (
                           <div
                             key={i}
                             className="grid grid-cols-5 gap-2 items-center"
@@ -341,7 +325,7 @@ export function AddVisitForm({
                               placeholder="Test Name"
                               value={lab.test_name}
                               onChange={(e) => {
-                                const updated = [...(field.value || [])];
+                                const updated = [...((field.value as any[]) || [])];
                                 updated[i] = {
                                   ...lab,
                                   test_name: e.target.value,
@@ -353,7 +337,7 @@ export function AddVisitForm({
                               placeholder="Value"
                               value={lab.value}
                               onChange={(e) => {
-                                const updated = [...(field.value || [])];
+                                const updated = [...((field.value as any[]) || [])];
                                 updated[i] = { ...lab, value: e.target.value };
                                 field.onChange(updated);
                               }}
@@ -362,7 +346,7 @@ export function AddVisitForm({
                               placeholder="Unit (optional)"
                               value={lab.unit || ""}
                               onChange={(e) => {
-                                const updated = [...(field.value || [])];
+                                const updated = [...((field.value as any[]) || [])];
                                 updated[i] = { ...lab, unit: e.target.value };
                                 field.onChange(updated);
                               }}
@@ -370,7 +354,7 @@ export function AddVisitForm({
                             <Select
                               value={lab.status || ""}
                               onValueChange={(val) => {
-                                const updated = [...(field.value || [])];
+                                const updated = [...((field.value as any[]) || [])];
                                 updated[i] = { ...lab, status: val };
                                 field.onChange(updated);
                               }}
@@ -394,7 +378,7 @@ export function AddVisitForm({
                               variant="destructive"
                               size="icon-sm"
                               onClick={() => {
-                                const updated = (field.value || []).filter(
+                                const updated = ((field.value as any[]) || []).filter(
                                   (_, idx) => idx !== i
                                 );
                                 field.onChange(updated);
@@ -411,7 +395,7 @@ export function AddVisitForm({
                           size="sm"
                           onClick={() =>
                             field.onChange([
-                              ...(field.value || []),
+                              ...((field.value as any[]) || []),
                               {
                                 test_name: "",
                                 value: "",
@@ -428,7 +412,7 @@ export function AddVisitForm({
                       <Input
                         type={fieldDef.type}
                         placeholder={fieldDef.label}
-                        value={field.value ?? ""}
+                        value={(field.value as string | number | undefined) ?? ""}
                         onChange={(e) => field.onChange(e.target.value)}
                       />
                     )}

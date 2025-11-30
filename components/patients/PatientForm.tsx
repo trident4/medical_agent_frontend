@@ -45,7 +45,7 @@ type PatientFormData = z.infer<typeof patientSchema>;
 interface PatientFormProps {
   mode: "add" | "edit" | "view";
   patient?: Patient | null;
-  onSubmit?: (data: PatientFormData) => void;
+  onSubmit?: (data: PatientFormData | null) => void;
 }
 
 export function PatientForm({ mode, patient, onSubmit }: PatientFormProps) {
@@ -55,31 +55,31 @@ export function PatientForm({ mode, patient, onSubmit }: PatientFormProps) {
     resolver: zodResolver(patientSchema),
     defaultValues: patient
       ? {
-          first_name: patient.first_name || "",
-          last_name: patient.last_name || "",
-          date_of_birth: patient.date_of_birth || "",
-          gender: patient.gender || "",
-          phone: patient.phone || "",
-          email: patient.email || "",
-          address: patient.address || "",
-          emergency_contact: patient.emergency_contact || "",
-          medical_history: patient.medical_history || "",
-          allergies: patient.allergies || "",
-          current_medications: patient.current_medications || "",
-        }
+        first_name: patient.first_name || "",
+        last_name: patient.last_name || "",
+        date_of_birth: patient.date_of_birth || "",
+        gender: patient.gender || "",
+        phone: patient.phone || "",
+        email: patient.email || "",
+        address: patient.address || "",
+        emergency_contact: patient.emergency_contact || "",
+        medical_history: patient.medical_history || "",
+        allergies: patient.allergies || "",
+        current_medications: patient.current_medications || "",
+      }
       : {
-          first_name: "",
-          last_name: "",
-          date_of_birth: "",
-          gender: "",
-          phone: "",
-          email: "",
-          address: "",
-          emergency_contact: "",
-          medical_history: "",
-          allergies: "",
-          current_medications: "",
-        },
+        first_name: "",
+        last_name: "",
+        date_of_birth: "",
+        gender: "",
+        phone: "",
+        email: "",
+        address: "",
+        emergency_contact: "",
+        medical_history: "",
+        allergies: "",
+        current_medications: "",
+      },
   });
 
   const onSubmitHandler = async (data: PatientFormData) => {

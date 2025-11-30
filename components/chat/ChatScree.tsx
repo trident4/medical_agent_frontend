@@ -82,7 +82,7 @@ export default function ChatScreen({
   };
 
   return (
-    <div className="flex flex-col h-[90vh] w-full mx-auto border rounded-lg shadow-sm">
+    <div className="flex flex-col h-[600px] w-full mx-auto border rounded-lg shadow-sm">
       {/* Chat Window */}
       <div className="flex-1">
         <Virtuoso
@@ -92,9 +92,8 @@ export default function ChatScreen({
           itemContent={(index, msg) => (
             <div
               key={index}
-              className={`p-4 flex ${
-                msg.role === "user" ? "justify-end" : "justify-start"
-              }`}
+              className={`p-4 flex ${msg.role === "user" ? "justify-end" : "justify-start"
+                }`}
             >
               {msg.role === "user" ? (
                 <div className="bg-blue-600 text-white px-4 py-2 rounded-lg max-w-[80%]">
