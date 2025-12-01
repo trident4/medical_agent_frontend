@@ -43,6 +43,12 @@ const menuItems: MenuItem[] = [
     href: "/adduser",
     icon: Users,
   },
+  {
+    key: "analytics",
+    label: "Analytics",
+    href: "/analytics",
+    icon: Users,
+  },
 ];
 
 export function AppSidebar() {
