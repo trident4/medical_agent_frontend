@@ -15,6 +15,7 @@ import useSWR from "swr";
 import { Spinner } from "@/components/ui/spinner";
 import ReactMarkdown from "react-markdown";
 import ChatScreen from "@/components/chat/ChatScree";
+import NormalQAChat from "@/components/chat/NormalQAChat";
 import { ChevronDown, ChevronUp, Plus, LogOut } from "lucide-react";
 import { FormDialog } from "@/components/commoncomp/FormDialog";
 import { PatientForm } from "@/components/patients/PatientForm";
@@ -253,6 +254,10 @@ export default function PatientsPage() {
               patientId={selectedPatient?.id || null}
               visitId={null}
             />
+            {/* <NormalQAChat
+              patientId={selectedPatient?.id || null}
+              visitId={null}
+            /> */}
           </div>
         )}
         {selectedPatient === null && (

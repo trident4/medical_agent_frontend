@@ -78,20 +78,20 @@ export default function PatientSearch({
     error: swrError,
     isLoading,
   } = useSWR<PatientResponse>(patientsUrl, fetcher, {
-    // onError: (error) => {
-    //   // Handle errors from the API
-    //   const errorMessage = error?.error || error?.message || "Failed to load patients";
-    //   toast.error(errorMessage, {
-    //     position: "top-center",
-    //     duration: 4000,
-    //   });
-    //   // if (error.status === 401) {
-    //   //   handleLogout();
-    //   // }
-    // },
-    // // Optionally add these for better UX
-    // revalidateOnFocus: false,
-    // shouldRetryOnError: false,
+    onError: (error) => {
+      // Handle errors from the API
+      const errorMessage = error?.error || error?.message || "Failed to load patients";
+      toast.error(errorMessage, {
+        position: "top-center",
+        duration: 4000,
+      });
+      if (error.status === 401) {
+        handleLogout();
+      }
+    },
+    // Optionally add these for better UX
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
   });
 
   const results = data?.items || [];

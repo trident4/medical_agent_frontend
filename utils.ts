@@ -34,6 +34,9 @@ export const do_get = async (url: string, token: string) => {
     });
 
     if (!res.ok) {
+      if (res.status === 401) {
+        deleteCookie("token");
+      }
       let errorMessage = `${res.status} ${res.statusText}`;
       try {
         const errorBody = await res.json();

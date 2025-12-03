@@ -7,6 +7,9 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Virtuoso } from "react-virtuoso";
+import { useAIStream } from "@/hooks/useAIStream";
+import { MermaidChart } from "@/components/commoncomp/MermaidChart";
+
 
 export default function ChatScreen({
   patientId,
@@ -17,8 +20,31 @@ export default function ChatScreen({
 }) {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
   const virtuosoRef = useRef<any>(null);
+
+  const { stream, isStreaming, error } = useAIStream({
+    onChunk: (chunk) => {
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        const lastMessageIndex = newMessages.length - 1;
+        const lastMessage = newMessages[lastMessageIndex];
+
+        if (lastMessage && lastMessage.role === "assistant") {
+          newMessages[lastMessageIndex] = {
+            ...lastMessage,
+            content: lastMessage.content + chunk,
+          };
+          return newMessages;
+        }
+        return prev;
+      });
+      // Scroll to bottom on new chunk
+      virtuosoRef.current?.scrollToIndex({
+        index: messages.length + 1,
+        behavior: "smooth",
+      });
+    },
+  });
 
   // Body template for POST call
   const questionBody = { patient_id: patientId, visit_id: visitId };
@@ -35,41 +61,20 @@ export default function ChatScreen({
     if (!input.trim()) return;
 
     const userMessage = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
+    // Add user message and a placeholder for assistant message
+    setMessages((prev) => [
+      ...prev,
+      userMessage,
+      { role: "assistant", content: "" }
+    ]);
+
+    const currentInput = input;
     setInput("");
-    setLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...questionBody, question: input }),
-      });
-
-      const data = await res.json();
-      const assistantMessage = { role: "assistant", content: data };
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      // Scroll to bottom after response
-      setTimeout(
-        () =>
-          virtuosoRef.current?.scrollToIndex({
-            index: messages.length + 1,
-            behavior: "smooth",
-          }),
-        200
-      );
+      await stream("/api/streamchat", { ...questionBody, question: currentInput });
     } catch (err) {
       console.error(err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: { answer: "⚠️ Error fetching response." },
-        },
-      ]);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -96,30 +101,48 @@ export default function ChatScreen({
                 }`}
             >
               {msg.role === "user" ? (
-                <div className="bg-blue-600 text-white px-4 py-2 rounded-lg max-w-[80%]">
+                <div className="bg-black text-white px-4 py-2 rounded-lg max-w-[80%]">
                   {msg.content}
                 </div>
               ) : (
                 <div className="bg-zinc-100 dark:bg-zinc-800 px-4 py-2 rounded-lg max-w-[80%] prose dark:prose-invert">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {msg.content.answer || msg.content}
-                  </ReactMarkdown>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      code(props) {
+                        const { node, className, children, ...rest } = props;
+                        const inline = (props as any).inline;
+                        const match = /language-mermaid/.test(className || '');
+                        const code = String(children).replace(/\n$/, '');
 
-                  {msg.content.confidence_score && (
-                    <p className="text-xs text-zinc-500 mt-2">
-                      🧠 Confidence: {msg.content.confidence_score}
-                    </p>
-                  )}
+                        return !inline && match ? (
+                          <MermaidChart code={code} />
+                        ) : (
+                          <code className={className} {...rest}>
+                            {children}
+                          </code>
+                        );
+                      }
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
                 </div>
               )}
             </div>
           )}
         />
 
-        {/* Loading Indicator */}
-        {loading && (
+        {/* Loading/Streaming Indicator */}
+        {isStreaming && (
           <div className="flex items-center gap-2 px-4 pb-2 text-zinc-500 text-sm">
-            <Loader2 className="h-4 w-4 animate-spin" /> Thinking...
+            <Loader2 className="h-4 w-4 animate-spin" /> Generating response...
+          </div>
+        )}
+
+        {error && (
+          <div className="px-4 pb-2 text-red-500 text-sm">
+            Error: {error}
           </div>
         )}
       </div>
@@ -131,8 +154,9 @@ export default function ChatScreen({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
+          disabled={isStreaming}
         />
-        <Button onClick={handleSend} disabled={loading}>
+        <Button onClick={handleSend} disabled={isStreaming}>
           Send
         </Button>
       </div>
