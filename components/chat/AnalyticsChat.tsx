@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Loader2, ChevronDown, ChevronRight, Database, Table } from "lucide-react";
@@ -12,12 +12,65 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useAIStream } from "@/hooks/useAIStream";
 
 export default function AnalyticsChat() {
     const [messages, setMessages] = useState<any[]>([]);
     const [input, setInput] = useState("");
-    const [loading, setLoading] = useState(false);
     const virtuosoRef = useRef<any>(null);
+
+    const { stream, isStreaming, error } = useAIStream({
+        onChunk: (chunk) => {
+            setMessages((prev) => {
+                const newMessages = [...prev];
+                const lastMessageIndex = newMessages.length - 1;
+                const lastMessage = newMessages[lastMessageIndex];
+
+                if (lastMessage && lastMessage.role === "assistant") {
+                    // Try to parse chunk as JSON (metadata)
+                    try {
+                        const parsedChunk = JSON.parse(chunk);
+                        if (parsedChunk.type === "metadata") {
+                            // It's metadata - store it but don't append to explanation
+                            const updatedContent = {
+                                ...lastMessage.content,
+                                sql_query: parsedChunk.sql_query,
+                                results: parsedChunk.results,
+                                row_count: parsedChunk.row_count,
+                                source: parsedChunk.source,
+                            };
+                            newMessages[lastMessageIndex] = {
+                                ...lastMessage,
+                                content: updatedContent,
+                            };
+                            return newMessages;
+                        }
+                    } catch (e) {
+                        // Not JSON - it's explanation text, append it
+                        const updatedContent = {
+                            ...lastMessage.content,
+                            explanation: (lastMessage.content.explanation || "") + chunk,
+                        };
+                        newMessages[lastMessageIndex] = {
+                            ...lastMessage,
+                            content: updatedContent,
+                        };
+                        return newMessages;
+                    }
+                }
+                return prev;
+            });
+            // Scroll to bottom on new chunk
+            virtuosoRef.current?.scrollToIndex({
+                index: messages.length,
+                behavior: "smooth",
+            });
+        },
+        onDone: (finalData) => {
+            // Stream completed
+            console.log("Analytics stream completed");
+        },
+    });
 
     // Body template for POST call
     const questionBody = { explain: true };
@@ -28,40 +81,37 @@ export default function AnalyticsChat() {
 
         const userMessage = { role: "user", content: input };
         setMessages((prev) => [...prev, userMessage]);
+
+        const question = input;
         setInput("");
-        setLoading(true);
+
+        // Add placeholder assistant message
+        setMessages((prev) => [
+            ...prev,
+            {
+                role: "assistant",
+                content: { explanation: "" },
+            },
+        ]);
 
         try {
-            const res = await fetch("/api/analytics", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...questionBody, question: input }),
+            await stream("/api/analytics", {
+                ...questionBody,
+                question,
             });
-
-            const data = await res.json();
-            const assistantMessage = { role: "assistant", content: data };
-            setMessages((prev) => [...prev, assistantMessage]);
-
-            // Scroll to bottom after response
-            setTimeout(
-                () =>
-                    virtuosoRef.current?.scrollToIndex({
-                        index: messages.length + 1,
-                        behavior: "smooth",
-                    }),
-                200
-            );
         } catch (err) {
             console.error(err);
-            setMessages((prev) => [
-                ...prev,
-                {
+            setMessages((prev) => {
+                const newMessages = [...prev];
+                newMessages[newMessages.length - 1] = {
                     role: "assistant",
-                    content: { explanation: "⚠️ Error fetching response." },
-                },
-            ]);
-        } finally {
-            setLoading(false);
+                    content: {
+                        explanation: "⚠️ Error fetching response.",
+                        error: err instanceof Error ? err.message : "Unknown error"
+                    },
+                };
+                return newMessages;
+            });
         }
     };
 
@@ -94,7 +144,7 @@ export default function AnalyticsChat() {
                             ) : (
                                 <div className="bg-muted px-4 py-2 rounded-lg max-w-[90%] w-full prose dark:prose-invert">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                        {msg.content.explanation || "No explanation provided."}
+                                        {msg.content.explanation || "Analyzing..."}
                                     </ReactMarkdown>
 
                                     {/* Technical Details Collapsible */}
@@ -119,7 +169,7 @@ export default function AnalyticsChat() {
                 />
 
                 {/* Loading Indicator */}
-                {loading && (
+                {isStreaming && (
                     <div className="flex items-center gap-2 px-4 pb-2 text-muted-foreground text-sm">
                         <Loader2 className="h-4 w-4 animate-spin" /> Analyzing data...
                     </div>
@@ -134,7 +184,7 @@ export default function AnalyticsChat() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                 />
-                <Button onClick={handleSend} disabled={loading}>
+                <Button onClick={handleSend} disabled={isStreaming}>
                     Send
                 </Button>
             </div>
