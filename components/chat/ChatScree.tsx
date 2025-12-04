@@ -87,7 +87,7 @@ export default function ChatScreen({
   };
 
   return (
-    <div className="flex flex-col h-[600px] w-full mx-auto border rounded-lg shadow-sm">
+    <div className="flex flex-col h-full w-full mx-auto border rounded-lg shadow-sm">
       {/* Chat Window */}
       <div className="flex-1">
         <Virtuoso
@@ -160,6 +160,6 @@ export default function ChatScreen({
           Send
         </Button>
       </div>
-    </div>
+    </div >
   );
 }

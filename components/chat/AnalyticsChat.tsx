@@ -74,7 +74,7 @@ export default function AnalyticsChat() {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-100px)] w-full mx-auto border rounded-lg shadow-sm bg-background">
+        <div className="flex flex-col h-full w-full mx-auto border rounded-lg shadow-sm bg-background">
             {/* Chat Window */}
             <div className="flex-1">
                 <Virtuoso

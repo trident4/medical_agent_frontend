@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Users, Home } from "lucide-react";
+import { LogOut, Users, UserRoundPlus, ChartSpline } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -25,12 +25,12 @@ type MenuItem = {
 };
 
 const menuItems: MenuItem[] = [
-  {
-    key: "home",
-    label: "Home",
-    href: "/",
-    icon: Home,
-  },
+  // {
+  //   key: "home",
+  //   label: "Home",
+  //   href: "/",
+  //   icon: Home,
+  // },
   {
     key: "patients",
     label: "Patients",
@@ -41,13 +41,13 @@ const menuItems: MenuItem[] = [
     key: "addUser",
     label: "Add User",
     href: "/adduser",
-    icon: Users,
+    icon: UserRoundPlus,
   },
   {
     key: "analytics",
     label: "Analytics",
     href: "/analytics",
-    icon: Users,
+    icon: ChartSpline,
   },
 ];
 
@@ -55,11 +55,11 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <h2 className="text-lg font-semibold">Medical Agent</h2>
+        <h2 className="text-lg font-semibold">Doctors Assistant</h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Workspace</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
