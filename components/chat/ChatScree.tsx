@@ -94,6 +94,8 @@ export default function ChatScreen({
           ref={virtuosoRef}
           data={messages}
           followOutput="smooth"
+          increaseViewportBy={{ top: 200, bottom: 600 }}
+          computeItemKey={(index) => `message-${index}`}
           itemContent={(index, msg) => (
             <div
               key={index}

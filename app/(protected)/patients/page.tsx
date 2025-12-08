@@ -132,10 +132,35 @@ export default function PatientsPage() {
     setPageTitle("Patients");
   }, [setPageTitle]);
 
+  // View/Edit Patient Dialog (shared for both mobile and desktop)
+  const patientFormDialog = (
+    <FormDialog
+      dialogSize="lg"
+      title={`${patientDialogMode.charAt(0).toUpperCase() +
+        patientDialogMode.slice(1)
+        } Patient`}
+      description={
+        patientDialogMode === "add"
+          ? "Fill out the details below to add a patient."
+          : ""
+      }
+      open={patientDialogOpen}
+      onOpenChange={setPatientDialogOpen}
+      trigger={<div style={{ display: 'none' }} />} // Hidden trigger, opened programmatically
+    >
+      <PatientForm
+        mode={patientDialogMode}
+        patient={selectedPatientForDialog}
+        onSubmit={() => setPatientDialogOpen(false)}
+      />
+    </FormDialog>
+  );
+
   // Render mobile layout
   if (isMobile) {
     return (
       <div className="flex flex-col h-[calc(100vh-4rem)] w-full bg-white dark:bg-black font-sans">
+        {patientFormDialog} {/* Place the shared dialog here */}
         {/* Mobile Header */}
         <div className="flex-shrink-0 border-b p-4">
           <div className="flex items-center justify-between">
@@ -326,7 +351,7 @@ export default function PatientsPage() {
   // Desktop layout (unchanged)
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] w-full bg-white dark:bg-black font-sans">
-
+      {patientFormDialog} {/* Place the shared dialog here */}
 
       {/* Resizable Split Panel Layout */}
       <PanelGroup direction="horizontal" className="flex-1">
